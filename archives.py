@@ -11,20 +11,25 @@ emperor = 154943011
 player_dict_throttle = {}
 
 
-def throttle(f, arguments):
-    #  get unixtime
-    now = get_unixtime()
-    who = arguments['who']
+def throttle(f):
+    def wrapper(*args):
+        #  get unixtime
+        now = get_unixtime()
+        who = args[0]
 
-    if player_dict_throttle[who]['messages'] > 4:
-        if now - player_dict_throttle[who]['last_message_time'] < 300:
-            return 'ok'
+        if player_dict_throttle[who]['messages'] > 4 and who not in full_permissions:
+            if now - player_dict_throttle[who]['last_message_time'] < 300:
+                return 'ok'
+            else:
+                player_dict_throttle[who]['messages'] = 0
         else:
-            player_dict_throttle[who]['messages'] = 0
-    else:
-        if f(arguments):
-            player_dict_throttle[who]['messages'] += 1
-            player_dict_throttle[who]['last_message_time'] = now
+            result = f(args)
+            if result:
+                player_dict_throttle[who]['messages'] += 1
+                player_dict_throttle[who]['last_message_time'] = now
+            return result
+
+    return wrapper
 
 
 def get_unixtime():
@@ -37,8 +42,10 @@ def set_judges():
     return [el['id'] for el in d]
 
 
+@throttle
 def justis(args):
-    who, obj = args['who'], args['obj']
+
+    who, obj = args
 
     if obj['text'] == '' and 'attachments' in obj:
         if 'sticker' in obj['attachments'][0]:
@@ -84,6 +91,10 @@ def check_permissions(user, method):
         send('Вы не являетесь военным судьей - метод "%s" вам недоступен' % method, 0, user)
 
 
+def put_player_in_throttle_list(who):
+        player_dict_throttle[who] = {'messages': 0, 'last_message_time': get_unixtime()}
+
+
 def get_war(who, what, offset, caller='', peer_id=''):
     if what:
         what = ' ' + what
@@ -107,9 +118,10 @@ judges = set_judges()
 full_permissions = [levin_id, emperor, margrave]
 
 
+@throttle
 def get_battle_order(args):
 
-    who, what = args['who'], args['what']
+    who, what = args
 
     if what.startswith('help') or what.startswith('помощь'):
         send('Команды:\n 1) Если войны нет: set + документы для оборонки\n\
@@ -206,6 +218,9 @@ def set_permission(who, obj):
         this_day = d
         margrave = check_margrave()
 
+    if who not in player_dict_throttle:
+        put_player_in_throttle_list(who)
+
     if who in full_permissions:
 
         if what == 'start' or what == 'начать':
@@ -252,14 +267,12 @@ def set_permission(who, obj):
             judges = set_judges()
             send('Списoк судий успешно установлен!', 0, who)
         elif what.startswith('игрок'):
-            get_battle_order({'who': who, 'what': what[6:]})
+            get_battle_order(who, what[6:])
 
         else:
-            get_battle_order({'who': who, 'what': what})
+            get_battle_order(who, what)
     else:
-        if who not in player_dict_throttle:
-            player_dict_throttle[who] = {'messages': 0, 'last_message_time': get_unixtime()}
-        if not throttle(justis, {'who': who, 'obj': obj}):
-            throttle(get_battle_order, {'who': who, 'what': what})
+        if not justis(who, obj):
+            get_battle_order(who, what)
 
     return 'ok'

@@ -54,7 +54,7 @@ def processing():
             session.method('board.createComment', values)
             return 'ok'
 
-    elif data['secret'] == 'OeL00qjxjQCKYzOmkJG4hSYmCgOwXo8LQlAi41DAA1bsD7fOY':
+    elif data['secret'] == secret.archives_key():
         if data['type'] == 'confirmation':
             return confirmation_token_for_archives
         obj = data['object']
