@@ -23,7 +23,8 @@ def throttle(f):
             else:
                 player_dict_throttle[who]['messages'] = 0
         else:
-            result = f(args)
+            result = f(*args)
+
             if result:
                 player_dict_throttle[who]['messages'] += 1
                 player_dict_throttle[who]['last_message_time'] = now
@@ -33,7 +34,7 @@ def throttle(f):
 
 
 def get_unixtime():
-    return int(time.mktime(datetime.datetime.now().timetuple()))
+    return int(time.time())
 
 
 def set_judges():
@@ -43,9 +44,7 @@ def set_judges():
 
 
 @throttle
-def justis(args):
-
-    who, obj = args
+def justis(who, obj):
 
     if obj['text'] == '' and 'attachments' in obj:
         if 'sticker' in obj['attachments'][0]:

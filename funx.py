@@ -6,10 +6,10 @@
 import secret
 import datetime
 
-session = secret.session()
+session = secret.levin_session()
 session_t = secret.session_t()
-rez = secret.rez_id()
-main = secret.main_id()
+rez = secret.rez_id
+main = secret.main_id
 
 
 def add_post(event_type, data):
@@ -37,7 +37,7 @@ def add_post(event_type, data):
         global session, rez
         nonlocal data
 
-        d = secret.boardvalues()
+        d = secret.boardvalues
         topic_archive = d[str(data['topic_id'])]
 
         sms = str(data['id']) + ' @id' + str(data['from_id']) + '\n' + str(data['text'])
