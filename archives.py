@@ -1,10 +1,10 @@
-import secret
+from secret import archive_token
 import vk_api
 import random
 import datetime
 import time
 
-bot = vk_api.VkApi(token=secret.archive_token())
+bot = vk_api.VkApi(token=archive_token)
 this_day = datetime.datetime.now().day
 levin_id = 202195616
 emperor = 154943011
@@ -13,21 +13,24 @@ player_dict_throttle = {}
 
 def throttle(f):
     def wrapper(*args):
-        #  get unixtime
         now = get_unixtime()
         who = args[0]
 
         if player_dict_throttle[who]['messages'] > 4 and who not in full_permissions:
+
             if now - player_dict_throttle[who]['last_message_time'] < 300:
                 return 'ok'
+
             else:
                 player_dict_throttle[who]['messages'] = 0
+
         else:
             result = f(*args)
 
             if result:
                 player_dict_throttle[who]['messages'] += 1
                 player_dict_throttle[who]['last_message_time'] = now
+
             return result
 
     return wrapper
@@ -47,12 +50,15 @@ def set_judges():
 def justis(who, obj):
 
     if obj['text'] == '' and 'attachments' in obj:
+
         if 'sticker' in obj['attachments'][0]:
+
             if obj['attachments'][0]['sticker']['sticker_id'] == 163:
                 bot.method('messages.send',
                            {'version': 5.92, 'user_id': who, 'random_id': int(random.random() * 10000000000000),
                             'sticker_id': 163})
                 return True
+
     return False
 
 
@@ -61,16 +67,12 @@ def check_margrave():
     return int(new_margrave['items'][0]['text'][9:])
 
 
-'''
-    :param forward - id сообщения, которое требуется пересылать
-    :type forward - int, convert(bool)
-'''
-
-
 def send(text, forward, who):
-    values = {'version': 5.92, 'user_id': who, 'random_id': int(random.random() * 10000000000000), 'message': text}
+    values = {'version': 5.92, 'user_id': who, 'random_id': int(random.random() * 100000000000000), 'message': text}
+
     if forward:
         values['forward_messages'] = forward
+
     bot.method('messages.send', values)
 
 
@@ -83,7 +85,7 @@ def get_user(ids):
 
 
 def check_permissions(user, method):
-    global judges
+
     if user in judges or user in full_permissions:
         return True
     else:
@@ -95,20 +97,27 @@ def put_player_in_throttle_list(who):
 
 
 def get_war(who, what, offset, caller='', peer_id=''):
+
     if what:
         what = ' ' + what
+
     values = {'version': 5.92, 'offset': offset, 'q': 'set%s' % what}
+
     if caller.startswith('get'):
         values['peer_id'] = peer_id
+
     messages = bot.method('messages.search', values)
     count = len(messages['items'])
     sms_ids = []
+
     if count == 0:
         send('Нет приказов по запрошенному вами конфликту. Возможно, они ещё не присланы, или вы ошиблись \
         в названии конфликта', 0, who)
+
     for i in range(count):
         if messages['items'][i]['from_id'] != -169839935:
             sms_ids.append(str(messages['items'][i]['id']))
+
     return ','.join(sms_ids)
 
 
@@ -118,9 +127,7 @@ full_permissions = [levin_id, emperor, margrave]
 
 
 @throttle
-def get_battle_order(args):
-
-    who, what = args
+def get_battle_order(who, what):
 
     if what.startswith('help') or what.startswith('помощь'):
         send('Команды:\n 1) Если войны нет: set + документы для оборонки\n\
@@ -157,22 +164,29 @@ def get_battle_order(args):
                 what = get_user(what)
                 judge = search('set %s' % who, margrave)['items']
                 if len(judge):
+
                     judge = judge[0]['text']
                     indictee = get_user(','.join(judge[len('set %s' % who):].split()))
                     indictee_id = [el['id'] for el in indictee]
+
                     for user in what:
+
                         if user['id'] in indictee_id or who in full_permissions:
+
                             messages = search('set', user['id'])
                             count = messages['count']
                             ids = ''
+
                             for i in range(0, count, 20):
                                 ids += get_war(who, '', i, 'get', user['id'])
                             send('', ids, who)
+
                         else:
                             send(
                                 'Игрока "%s %s" нет в списке ваших подсудимых. \
                                 Его оборонительный приказ вам недоступен.' %
                                 (user['first_name'], user['last_name']), 0, who)
+
                 else:
                     send('Данного игрока нет в списке ваших подсудимых', 0, who)
 
