@@ -5,11 +5,17 @@
 # @param rez: id группы архива, куда добавляются копии постов из основной группы
 import secret
 import datetime
+import json
 
 session = secret.levin_session()
 session_t = secret.session_t()
 rez = secret.rez_id
 main = secret.main_id
+
+
+def update_topic_dict():
+    with open('topic_dict.json', 'tw') as f:
+        f.write(json.dumps(secret.boardvalues))
 
 
 def add_post(event_type, data):
@@ -19,7 +25,7 @@ def add_post(event_type, data):
         global session, rez
         nonlocal data
 
-        values_search = {'version': 5.80, 'owner_id': rez, 'query': str(data['post_id'])}
+        values_search = {'v': 5.92, 'owner_id': rez, 'query': str(data['post_id'])}
         post_object = session.method('wall.search', values_search)
 
         if post_object['count'] != 0:
@@ -29,7 +35,7 @@ def add_post(event_type, data):
                 sms = 'edit at '+date.strftime("%d-%m-%Y %H:%M:%S") + '\n' + '@id'+str(data['from_id']) \
                       + '\n' + str(data['text'])
 
-            val = {'version': 5.80, 'owner_id': rez, 'from_group': rez[1:], 'post_id': post_object['items'][0]['id'],
+            val = {'v': 5.92, 'owner_id': rez, 'from_group': rez[1:], 'post_id': post_object['items'][0]['id'],
                    'message': sms}
             session.method('wall.createComment', val)
 
@@ -38,19 +44,28 @@ def add_post(event_type, data):
         nonlocal data
 
         d = secret.boardvalues
-        topic_archive = d[str(data['topic_id'])]
+        if str(data['topic_id']) in d:
+            topic_archive = d[str(data['topic_id'])]
+        else:                                                    # If topic_id isn`t in dict
+            req = session.method('board.getTopics', {'v': 5.92, 'group_id': main, 'topic_ids': data['topic_id']})
+            values = {'v': 5.92, 'group_id': int(rez[1:]), 'title': req['items'][0]['title'], 'from_group': 1,\
+                      'text': 'text'}
+            topic_id = session.method('board.addTopic', values)
+            secret.boardvalues[str(data['topic_id'])] = topic_id
+            update_topic_dict()
+            topic_archive = topic_id
 
         sms = str(data['id']) + ' @id' + str(data['from_id']) + '\n' + str(data['text'])
         if comment_type == 'edit':
             date = datetime.datetime.now()
             sms = 'edit at ' + date.strftime("%d-%m-%Y %H:%M:%S") + '\n' + sms
 
-        val = {'version': 5.80, 'group_id': rez[1:], 'topic_id': topic_archive, 'guid': data['id'],
+        val = {'v': 5.92, 'group_id': rez[1:], 'topic_id': topic_archive, 'guid': data['id'],
                'message': sms, 'from_group': 1}
         session.method('board.createComment', val)
 
     if event_type == 'wall':
-        values = {'version': 5.80, 'owner_id': rez, 'from_group': 1,
+        values = {'v': 5.92, 'owner_id': rez, 'from_group': 1,
                   'message': str(data['id']) + '\n' + '@id' + str(data['from_id']) + '\n' + str(data['text'])}
         session.method('wall.post', values)
 
@@ -73,9 +88,9 @@ def check_permissions(id_banned_user, admin, data):
     if data['level_new'] != 3 and (
             id_banned_user == 154943011 or id_banned_user == 445103876 or id_banned_user == 202195616) and admin \
             != 154943011 and admin != 202195616:
-        ban_values = {'version': 5.85, 'group_id': main, 'user_id': admin}
-        values = {'version': 5.85, 'group_id': main, 'user_id': str(id_banned_user), 'role': 'administrator'}
-        banval = {'version': 5.85, 'group_id': main, 'owner_id': admin, 'reason': 0,
+        ban_values = {'v': 5.92, 'group_id': main, 'user_id': admin}
+        values = {'v': 5.92, 'group_id': main, 'user_id': str(id_banned_user), 'role': 'administrator'}
+        banval = {'v': 5.92, 'group_id': main, 'owner_id': admin, 'reason': 0,
                   'comment': 'Наказан за покушение на Императора', 'comment_visible': 1}
         if id_banned_user == 202195616:
             session_t.method('groups.editManager', ban_values)
@@ -89,7 +104,7 @@ def check_permissions(id_banned_user, admin, data):
         levels = ['нет полномочий', 'модератор', 'редактор', 'администратор']
         text = ('Администратор @id%s изменил статус пользователя @id%s с "%s" на "%s"' %
                 (data['admin_id'], data['user_id'], levels[data['level_old']], levels[data['level_new']]))
-        values = {'version': 5.92, 'from_group': 1, 'group_id': rez[1:], 'topic_id': 39707149, 'message': text}
+        values = {'v': 5.92, 'from_group': 1, 'group_id': rez[1:], 'topic_id': 39707149, 'message': text}
         session.method('board.createComment', values)
 
     return 'ok'

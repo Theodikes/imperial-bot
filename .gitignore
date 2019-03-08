@@ -1,3 +1,4 @@
 *.json
 secret.py
+topic_dict.json
 /test
