@@ -41,14 +41,14 @@ def processing():
 
         elif data['type'] == 'wall_reply_delete':
             ident = obj['id']
-            values = {'version': 5.85, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39703400,
+            values = {'v': 5.85, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39703400,
                       'guid': ident, 'message': 'Комментарий к записи с id %s был удалён пользователем @id%s' %
                                                 (obj['post_id'], obj['deleter_id'])}
             session.method('board.createComment', values)
             return 'ok'
 
         elif data['type'] == 'user_block':
-            values = {'version': 5.92, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39707065,
+            values = {'v': 5.92, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39707065,
                       'guid': obj['unblock_date'],
                       'message': 'Пользователь @id%s был заблокирован админом @id%s по причине "%s" с пометкой "%s"'
                                  % (obj['user_id'], obj['admin_id'], reasons[obj['reason']], obj['comment'])}
@@ -59,7 +59,7 @@ def processing():
             text = ('Пользователь @id%s был разблокирован по истечении срока бана' % (obj['user_id']) if
                     obj['by_end_date'] else 'Пользователь @id%s был разблокирован администратором @id%s'
                                             % (obj['user_id'], obj['admin_id']))
-            values = {'version': 5.92, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39707065, 'message': text}
+            values = {'v': 5.92, 'from_group': 1, 'group_id': '169839935', 'topic_id': 39707065, 'message': text}
             session.method('board.createComment', values)
             return 'ok'
 

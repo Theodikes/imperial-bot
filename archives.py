@@ -55,7 +55,7 @@ def justis(who, obj):
 
             if obj['attachments'][0]['sticker']['sticker_id'] == 163:
                 bot.method('messages.send',
-                           {'version': 5.92, 'user_id': who, 'random_id': int(random.random() * 10000000000000),
+                           {'v': 5.92, 'user_id': who, 'random_id': int(random.random() * 10000000000000),
                             'sticker_id': 163})
                 return True
 
@@ -63,12 +63,12 @@ def justis(who, obj):
 
 
 def check_margrave():
-    new_margrave = bot.method('messages.search', {'version': 5.92, 'q': 'Маркграф', 'peer_id': levin_id})
+    new_margrave = bot.method('messages.search', {'v': 5.92, 'q': 'Маркграф', 'peer_id': levin_id})
     return int(new_margrave['items'][0]['text'][9:])
 
 
 def send(text, forward, who):
-    values = {'version': 5.92, 'user_id': who, 'random_id': int(random.random() * 100000000000000), 'message': text}
+    values = {'v': 5.92, 'user_id': who, 'random_id': int(random.random() * 100000000000000), 'message': text}
 
     if forward:
         values['forward_messages'] = forward
@@ -77,11 +77,11 @@ def send(text, forward, who):
 
 
 def search(q, user):
-    return bot.method('messages.search', {'version': 5.92, 'q': q, 'peer_id': user})
+    return bot.method('messages.search', {'v': 5.92, 'q': q, 'peer_id': user})
 
 
 def get_user(ids):
-    return bot.method('users.get', {'version': 5.92, 'user_ids': ids})
+    return bot.method('users.get', {'v': 5.92, 'user_ids': ids})
 
 
 def check_permissions(user, method):
@@ -101,7 +101,7 @@ def get_war(who, what, offset, caller='', peer_id=''):
     if what:
         what = ' ' + what
 
-    values = {'version': 5.92, 'offset': offset, 'q': 'set%s' % what}
+    values = {'v': 5.92, 'offset': offset, 'q': 'set%s' % what}
 
     if caller.startswith('get'):
         values['peer_id'] = peer_id
@@ -271,7 +271,7 @@ def set_permission(who, obj):
 
         elif what.startswith('set'):
             try:
-                judge = bot.method('users.get', {'version': 5.92, 'user_ids': what.split()[1], 'name_case': 'gen'})[0]
+                judge = bot.method('users.get', {'v': 5.92, 'user_ids': what.split()[1], 'name_case': 'gen'})[0]
                 send('Подсудимые %s %s успешно установлены' % (judge['first_name'], judge['last_name']), 0, who)
             except vk_api.exceptions.ApiError as e:
                 send('Ошибка "%s" - неправильно указана ссылка или такого юзера не существует' % e, 0, who)
