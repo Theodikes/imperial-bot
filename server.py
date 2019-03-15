@@ -1,7 +1,8 @@
 from flask import Flask, json, request
-from secret import levin_session, imp_key, archives_key
-import funx
-import archives
+from secret import levin_session, imp_key, archives_key, technical_key
+from archives import archives, funx
+from technologyDivision import dice
+
 app = Flask(__name__)
 
 
@@ -9,6 +10,7 @@ app = Flask(__name__)
 def processing():
     confirmation_token = '248551e0'
     confirmation_token_for_archives = 'bf2ef536'
+    confirmation_token_for_technology_division = '5bc7bae2'
     session = levin_session()
     reasons = ['другое"', 'спам', 'оскорбление участников', 'нецензурные выражения', 'сообщения не по теме']
     data = json.loads(request.data)
@@ -70,8 +72,19 @@ def processing():
         obj = data['object']
 
         if data['type'] == 'message_new':
-            ans = archives.set_permission(obj['from_id'], obj)
-            return ans
+            return archives.set_permission(obj['from_id'], obj)
+
+    elif data['secret'] == technical_key:
+
+        if data['type'] == 'confirmation':
+            return confirmation_token_for_technology_division
+
+        if data['type'] == 'message_new':
+            obj = data['object']
+            return dice.processing(obj['from_id'], obj)
+
+    else:
+        return 'ok'
 
 
 if __name__ == "__main__":
