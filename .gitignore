@@ -1,6 +1,5 @@
 *.json
 secret.py
-topic_dict.json
 .xml
 .iml
 /test
