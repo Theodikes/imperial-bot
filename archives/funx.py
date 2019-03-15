@@ -4,12 +4,12 @@
 # @param main: id основной группы, в которой происходят события
 # @param rez: id группы архива, куда добавляются копии постов из основной группы
 import secret
-import datetime
 import json
+from templates import get_date, levin, full_permissions
 
 session = secret.levin_session()
 session_t = secret.session_t()
-rez = secret.rez_id
+rez = secret.archives_id
 main = secret.main_id
 
 
@@ -31,9 +31,8 @@ def add_post(event_type, data):
         if post_object['count'] != 0:
             sms = '@id' + str(data['from_id']) + '\n' + str(data['text'])
             if comment_type == 'edit':
-                date = datetime.datetime.now()
-                sms = 'edit at '+date.strftime("%d-%m-%Y %H:%M:%S") + '\n' + '@id'+str(data['from_id']) \
-                      + '\n' + str(data['text'])
+                date = get_date()
+                sms = 'edit at ' + date + '\n' + '@id'+str(data['from_id']) + '\n' + str(data['text'])
 
             val = {'v': 5.92, 'owner_id': rez, 'from_group': rez[1:], 'post_id': post_object['items'][0]['id'],
                    'message': sms}
@@ -48,7 +47,7 @@ def add_post(event_type, data):
             topic_archive = d[str(data['topic_id'])]
         else:                                                    # If topic_id isn`t in dict
             req = session.method('board.getTopics', {'v': 5.92, 'group_id': main, 'topic_ids': data['topic_id']})
-            values = {'v': 5.92, 'group_id': int(rez[1:]), 'title': req['items'][0]['title'], 'from_group': 1,\
+            values = {'v': 5.92, 'group_id': int(rez[1:]), 'title': req['items'][0]['title'], 'from_group': 1,
                       'text': 'text'}
             topic_id = session.method('board.addTopic', values)
             secret.boardvalues[str(data['topic_id'])] = topic_id
@@ -57,8 +56,8 @@ def add_post(event_type, data):
 
         sms = str(data['id']) + ' @id' + str(data['from_id']) + '\n' + str(data['text'])
         if comment_type == 'edit':
-            date = datetime.datetime.now()
-            sms = 'edit at ' + date.strftime("%d-%m-%Y %H:%M:%S") + '\n' + sms
+            date = get_date()
+            sms = 'edit at ' + date + '\n' + sms
 
         val = {'v': 5.92, 'group_id': rez[1:], 'topic_id': topic_archive, 'guid': data['id'],
                'message': sms, 'from_group': 1}
@@ -85,14 +84,12 @@ def add_post(event_type, data):
 def check_permissions(id_banned_user, admin, data):
     global session, main, rez
 
-    if data['level_new'] != 3 and (
-            id_banned_user == 154943011 or id_banned_user == 445103876 or id_banned_user == 202195616) and admin \
-            != 154943011 and admin != 202195616:
+    if data['level_new'] != 3 and id_banned_user in full_permissions and admin not in full_permissions:
         ban_values = {'v': 5.92, 'group_id': main, 'user_id': admin}
         values = {'v': 5.92, 'group_id': main, 'user_id': str(id_banned_user), 'role': 'administrator'}
         banval = {'v': 5.92, 'group_id': main, 'owner_id': admin, 'reason': 0,
                   'comment': 'Наказан за покушение на Императора', 'comment_visible': 1}
-        if id_banned_user == 202195616:
+        if id_banned_user == levin:
             session_t.method('groups.editManager', ban_values)
             session_t.method('groups.editManager', values)
             session_t.method('groups.ban', banval)
