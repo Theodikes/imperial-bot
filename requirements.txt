@@ -14,4 +14,4 @@ six==1.12.0
 urllib3==1.24.1
 vk==2.0.2
 vk-api==11.3.0
-Werkzeug==0.14.1
+Werkzeug==0.15.3
